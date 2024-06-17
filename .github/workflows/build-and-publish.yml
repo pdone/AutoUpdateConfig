@@ -6,33 +6,50 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    env:
+      REPO_NAME: ${{ github.event.repository.name }}
     steps:
     - uses: actions/checkout@v4
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-        
     - name: Restore dependencies
       run: dotnet restore
-      
     - name: Build
       run: dotnet build --configuration Release --no-restore
-      
-    - name: Zip
+    - name: Publish Linux
       if: startsWith(github.ref, 'refs/tags/')
       run: |
-        mkdir ${{ github.event.repository.name }}
-        cp -a /bin/Release/net8.0/* ${{ github.event.repository.name }}
-        zip -r ${{ github.event.repository.name }}.zip ${{ github.event.repository.name }}
-      
-    - name: Publish
+        RT_OS="linux-x64"
+        FILE_NAME="$REPO_NAME-$RT_OS"
+        echo $FILE_NAME
+        mkdir $REPO_NAME
+        dotnet publish -c Release -r $RT_OS --property:PublishDir=$REPO_NAME
+        zip -r $FILE_NAME.zip $REPO_NAME
+    - name: Publish Win
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        RT_OS="win-x64"
+        FILE_NAME="$REPO_NAME-$RT_OS"
+        echo $FILE_NAME
+        rm -rf $REPO_NAME/*
+        dotnet publish -c Release -r $RT_OS --property:PublishDir=$REPO_NAME
+        zip -r $FILE_NAME.zip $REPO_NAME
+    - name: Publish Osx
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        RT_OS="osx-x64"
+        FILE_NAME="$REPO_NAME-$RT_OS"
+        echo $FILE_NAME
+        rm -rf $REPO_NAME/*
+        dotnet publish -c Release -r $RT_OS --property:PublishDir=$REPO_NAME
+        zip -r $FILE_NAME.zip $REPO_NAME
+    - name: Release
       uses: softprops/action-gh-release@v2
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: ${{ github.event.repository.name }}.zip
+        files: AutoUpdateConfig-*.zip
         name: ${{ github.ref_name }}
         draft: true
