@@ -1,0 +1,15 @@
+﻿{
+  "downloadLink": "http://abc.com/test.yaml",
+  "saveName": "config.yml",
+  "custom": {
+    "port": 7000,
+    "allow-lan": true,
+    "external-ui": "/ui",
+    "external-controller": "0.0.0.0:9000",
+    "secret": "password",
+    "authentication": [
+      "admin:123456"
+    ],
+    "ipv6": true
+  }
+}

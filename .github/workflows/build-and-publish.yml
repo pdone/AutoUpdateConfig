@@ -1,0 +1,38 @@
+name: Build and Publish
+
+on:
+  push:
+    tags: [ "v*.*.*" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+      
+    - name: Zip
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        mkdir ${{ github.event.repository.name }}
+        cp -a /bin/Release/net8.0/* ${{ github.event.repository.name }}
+        zip -r ${{ github.event.repository.name }}.zip ${{ github.event.repository.name }}
+      
+    - name: Publish
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: ${{ github.event.repository.name }}.zip
+        name: ${{ github.ref_name }}
+        draft: true
